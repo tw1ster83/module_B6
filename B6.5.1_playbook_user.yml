@@ -1,0 +1,29 @@
+---
+- hosts: all
+  gather_facts: yes
+  become: 'yes'
+
+  tasks:
+    - name: Add user1
+      user:
+        force: true
+        name: user1
+        create_home: true
+
+    - name: Add user1 to the sudoers
+      copy:
+        dest: "/etc/sudoers.d/user1"
+        content: "user1  ALL=(ALL)  NOPASSWD: ALL"  
+
+
+    - name: Deploy SSH Key
+      authorized_key: 
+        user: user1
+        key:  "{{ lookup('file', '/etc/ansible/user1.pub') }}"
+        state: present
+
+  handlers:
+    - name: restart ssh
+      service:
+        name: sshd
+        state: restarted
