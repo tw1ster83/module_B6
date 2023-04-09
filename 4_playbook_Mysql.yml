@@ -1,0 +1,31 @@
+- hosts: test
+  become: yes
+  gather_facts: false
+  vars:
+    new_mysql_root_password: Rfhnt#4d
+    mysqlsoftware:
+      - mysql-server
+      - mysql-client
+  tasks:
+    - name: install python, pip etc
+      shell: apt-get -y install "{{ item }}"
+      with_items:
+        - pip 
+        - python3-dev 
+        - default-libmysqlclient-dev 
+        - build-essential
+
+    - name: Install MySQL server
+      shell: apt-get -y install mysql-server
+
+    - name: Install MySQL client
+      shell: apt-get -y install mysql-client
+
+    - name: pip install mysqlclient
+      shell: pip install mysqlclient
+
+    - name: Start the MySQL service
+      action: service name=mysql state=started
+
+    - name: delete anonymous MySQL server user for localhost
+      action: mysql_user user="" state="absent"
