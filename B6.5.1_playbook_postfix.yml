@@ -1,0 +1,36 @@
+---
+- hosts: all
+  gather_facts: yes
+  become: 'yes'
+
+  tasks:
+  - name: Set Postfix option hostname
+    debconf: 
+      name=postifx 
+      question="postfix/mailname" 
+      value="sandbox" 
+      vtype="string"
+
+  - name: Set Postfix option type as internet site
+    debconf: 
+      name=postfix 
+      question="postfix/main_mailer_type" 
+      value="'Internet Site'" 
+      vtype="string"
+
+  - name: install postfix
+    apt:
+       force_apt_get: true
+       name: postfix
+       state: present
+    tags:
+        - init postfix
+
+  - name: Remove postfix
+    apt:
+      force_apt_get: true
+      pkg: postfix
+      state: absent
+
+    tags:
+        - drop postfix
