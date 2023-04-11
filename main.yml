@@ -1,0 +1,13 @@
+---
+# tasks file for vsftpd
+  - name: install vsftpd
+    apt:
+      name: vsftpd
+      state: present
+      force_apt_get: true
+ 
+  - name: start vsftpd
+    service:
+      name: vsftpd
+      state: started
+      enabled: yes
