@@ -1,0 +1,57 @@
+---
+- hosts: all
+  gather_facts: yes
+  become: 'yes'
+
+  tasks:
+  - name: Ensure group "superusers" exists
+    group:
+      name: superusers
+      state: present
+
+  - name: Add user2
+    user:
+      force: true
+      name: user2
+      group: superusers
+      create_home: true
+
+  - name: Add user3
+    user:
+      force: true
+      group: superusers
+      name: user3
+      create_home: true
+
+
+  - name: Add superusers to the sudoers
+    copy:
+      dest: "/etc/sudoers.d/superusers"
+      content: "%superusers  ALL=(ALL)  NOPASSWD: ALL" 
+ 
+
+  - name: Deploy SSH Key
+    authorized_key: 
+      user: user2
+      key: "{{ lookup('file', '/etc/ansible/user.pub') }}"
+      state: present
+
+  - name: Deploy SSH Key
+    authorized_key: 
+      user: user3
+      key: "{{ lookup('file', '/etc/ansible/user.pub') }}"
+      state: present
+
+  - name: Verify sudoers include statement
+    lineinfile:
+      dest: /etc/sudoers
+      line: "#superusers /etc/sudoers.d"
+      state: present
+      validate: /usr/sbin/visudo -cf %s
+
+
+  handlers:
+    - name: restart ssh
+      service:
+        name: sshd
+        state: restarted
