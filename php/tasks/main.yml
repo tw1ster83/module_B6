@@ -1,0 +1,32 @@
+---
+# tasks file for php
+   # INSTALL PHP-FPM
+ 
+  - name: Install PHP-FPM 
+    apt: 
+      name: php7.4-fpm 
+      update_cache: yes 
+      state: latest
+      force_apt_get: true
+
+  - name: create the needed directory
+    file:
+      path: /usr/share/webapps/phpinfo
+      owner: root
+      group: root
+      mode: 0755
+      state: directory
+
+  - name: Copy www.conf to php
+    copy:
+      src: '/etc/ansible/playbook/roles/php/templates/www.conf'
+      dest: '/etc/php/7.4/fpm/pool.d/www.conf'
+    loop:
+      - /etc/php/7.4/fpm/pool.d/www.conf
+
+      
+  - name: restart php-fpm
+    service:
+      name: php7.4-fpm
+      state: restarted
+

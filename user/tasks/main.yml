@@ -1,0 +1,37 @@
+---
+# tasks file for user
+  - name: Ensure group "superusers" exists
+    group:
+      name: superusers
+      state: present
+
+  - name: Add user
+    user:
+      name: user
+      group: superusers
+      create_home: true
+
+
+  - name: Add superusers to the sudoers
+    copy:
+      dest: "/etc/sudoers.d/superusers"
+      content: "%superusers  ALL=(ALL)  NOPASSWD: ALL" 
+ 
+
+  - name: Deploy SSH Key
+    authorized_key: 
+      user: user
+      key: "{{ lookup('file', '/etc/ansible/user.pub') }}"
+      state: present
+
+  - name: Copy superusers
+    copy:
+      src: '/etc/ansible/playbook/roles/user/templates/sshd_config'
+      dest: '/etc/ssh/sshd_config.d/sshd_config'
+    loop:
+      - /etc/ssh/sshd_config.d/sshd_config
+      
+  - name: restart sshd
+    service:
+      name: sshd
+      state: restarted
