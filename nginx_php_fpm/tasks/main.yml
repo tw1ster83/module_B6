@@ -1,0 +1,123 @@
+# tasks file for nginx_php_fpm
+---
+# INSTALL nginx
+  - name: download PGP-key
+    get_url:
+       url: http://nginx.org/keys/nginx_signing.key
+       dest: /etc/nginx_signing.key
+ 
+  - name: install PGP-key
+    apt_key:
+       file: /etc/nginx_signing.key
+       state: present
+ 
+  - name: Add Nginx Repo deb
+    apt_repository:
+      repo: deb https://nginx.org/packages/mainline/debian/ buster nginx
+ 
+  - name: Add Nginx Repo deb-src
+    apt_repository:
+      repo: deb-src https://nginx.org/packages/mainline/debian/ buster nginx
+ 
+  - name: Del Nginx-common
+    apt:
+      name: nginx-common
+      state: absent
+      force_apt_get: true
+ 
+  - name: Install Nginx 
+    apt:
+      name: nginx 
+      update_cache: yes
+      state: latest
+      force_apt_get: true
+ 
+  - name: Start Nginx and Enable it on the every boot
+    service:
+      name: nginx
+      state: started
+      enabled: yes
+   
+   # INSTALL PHP-FPM
+ 
+  - name: Install PHP-FPM 
+    apt: 
+      name: php7.4-fpm 
+      update_cache: yes 
+      state: latest
+      force_apt_get: true
+
+  - name: create the needed directory
+    file:
+      path: /usr/share/webapps/phpinfo
+      owner: root
+      group: root
+      mode: 0755
+      state: directory
+
+
+  - name: create a new file with lineinfile
+    lineinfile:
+      dest: /usr/share/webapps/phpinfo/index.php
+      regexp: '^'
+      line: ''
+      state: present
+      create: True
+
+  - name: add a multiline string to the file and delete the string from before
+    lineinfile:
+      dest: /usr/share/webapps/phpinfo/index.php
+      regexp: '^'
+      line: '<?php phpinfo(); ?>'
+      state: present
+      
+#  - name: set the permissions
+#    file:
+#      path: /var/www/lighttpd/
+#      mode: 0777
+#      state: directory
+
+  - name: create directory if they don't exist
+    file:
+      path: "{{ item }}"
+      state: directory
+      owner: root
+      group: root
+      mode: '0677'
+    with_items:
+      - /opt/nginx/ansible
+      
+  - name: Copy /www.conf.
+    copy:
+      src: '/etc/ansible/playbook/roles/nginx_php_fpm/templates/www.conf'
+      dest: '/etc/php/7.4/fpm/pool.d/www.conf'
+    loop:
+      - /etc/php/7.4/fpm/pool.d/www.conf
+
+
+  - name: Template a file nginx
+    template:
+      src: /etc/ansible/playbook/roles/nginx_php_fpm/templates/default.conf
+      dest: /etc/nginx/conf.d/
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: Template a file index
+    template:
+      src: /etc/ansible/playbook/roles/nginx_php_fpm/templates/index.php
+      dest: /opt/nginx/ansible/
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restarted
+      
+  - name: restart php-fpm
+    service:
+      name: php7.4-fpm
+      state: restarted
+
